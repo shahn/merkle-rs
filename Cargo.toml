@@ -1,0 +1,36 @@
+[package]
+name = "merkle-rs"
+description = """
+Merkle-rs aims to provide a flexible yet complete implementation of the Merkle
+Tree data structure. It offers consistency and inclusion proofs as well as
+signatures."""
+
+version = "0.0.1"
+authors = ["Sebastian Hahn <sebastian@torproject.org>"]
+license = "BSD-3-Clause"
+repository = "https://github.com/shahn/merkle-rs"
+categories = ["data-structures", "cryptography"]
+keywords = ["Merkle", "Merkle-Tree", "Merkle Tree", "Consistency Proof"]
+
+[features]
+default = ["ring"]
+
+[dependencies]
+generic-array = { version = "0.9.0", features = [ "serde" ] }
+digest = "0.7.2"
+ring = { version = "0.12.1", optional = true }
+untrusted = "0.5"
+serde = { version = "1.0.23", optional = true, features = [ "derive" ] }
+
+[profile.release]
+debug = true
+
+[dev-dependencies]
+rmp-serde = "0.13.7"
+sha2 = "0.7.0"
+byteorder = "1.2.1"
+ring = "0.12.1"
+
+[badges]
+maintenance = { status = "experimental" }
+

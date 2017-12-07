@@ -1,0 +1,117 @@
+#![cfg(feature = "ring")]
+extern crate ring;
+extern crate sha2;
+extern crate untrusted;
+extern crate merkle_rs;
+extern crate byteorder;
+
+use byteorder::{BigEndian, ByteOrder};
+use merkle_rs::{MerkleTree, OwningMerkleTree};
+use merkle_rs::{SignedMerkleTree, SignedOwningMerkleTree};
+use merkle_rs::KeyPair;
+use merkle_rs::digest;
+
+#[test]
+fn large_tree() {
+    let max_size = 257;
+
+    let kp = KeyPair::new().unwrap();
+    let okp = KeyPair::new().unwrap();
+    let pubk = kp.pub_key();
+    let opubk = okp.pub_key();
+    let mut mt = MerkleTree::<sha2::Sha256>::new();
+    let mut omt = OwningMerkleTree::<A, sha2::Sha256>::new();
+    let mut smt = SignedMerkleTree::<sha2::Sha256>::new(kp);
+    let mut somt = SignedOwningMerkleTree::<A, sha2::Sha256>::new(okp);
+    let mut heads = Vec::new();
+    let mut oheads = Vec::new();
+    let mut sheads = Vec::new();
+    let mut soheads = Vec::new();
+
+    let mut hashes = Vec::new();
+
+    for i in 0..max_size {
+        hashes.push(<sha2::Sha256 as digest::Digest>::hash_elem(&A(i)));
+    }
+
+    for i in 0..max_size {
+        assert_eq!(mt.head().size(), i as u64);
+        assert_eq!(omt.head().size(), i as u64);
+        assert_eq!(smt.head().size(), i as u64);
+        assert_eq!(somt.head().size(), i as u64);
+
+        mt.insert(hashes[i]);
+        omt.insert(A(i));
+        smt.insert(hashes[i]);
+        somt.insert(A(i));
+
+        heads.push(mt.head());
+        oheads.push(omt.head());
+        sheads.push(smt.head());
+        soheads.push(somt.head());
+
+        assert!(sheads[i].verify(&pubk));
+        assert!(soheads[i].verify(&opubk));
+
+        assert!(!sheads[i].verify(&opubk));
+        assert!(!soheads[i].verify(&pubk));
+
+        assert!(heads[i].root_hash() == oheads[i].root_hash());
+        assert!(heads[i].root_hash() == sheads[i].root_hash());
+        assert!(heads[i].root_hash() == soheads[i].root_hash());
+
+        for j in 0..i + 1 {
+            assert!(mt.inclusion_proof(hashes[j]).unwrap().verify());
+            assert!(omt.inclusion_proof(hashes[j]).unwrap().verify());
+            assert!(omt.inclusion_proof_for_elem(&A(j)).unwrap().verify());
+
+            assert!(smt.inclusion_proof(hashes[j]).unwrap().verify(&pubk));
+            assert!(somt.inclusion_proof(hashes[j]).unwrap().verify(&opubk));
+            assert!(
+                somt.inclusion_proof_for_elem(&A(j)).unwrap().verify(&opubk)
+            );
+
+            assert!(mt.consistency_proof(j as u64 + 1).unwrap().verify(
+                heads[j].root_hash(),
+            ));
+            assert!(omt.consistency_proof(j as u64 + 1).unwrap().verify(
+                heads[j].root_hash(),
+            ));
+            assert!(smt.consistency_proof(j as u64 + 1).unwrap().verify(
+                heads[j].root_hash(),
+                &pubk,
+            ));
+            assert!(somt.consistency_proof(j as u64 + 1).unwrap().verify(
+                heads[j].root_hash(),
+                &opubk,
+            ));
+        }
+
+        #[cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
+        for j in i + 1..max_size {
+            assert!(mt.inclusion_proof(hashes[j]).is_none());
+            assert!(omt.inclusion_proof(hashes[j]).is_none());
+            assert!(omt.inclusion_proof_for_elem(&A(j)).is_none());
+
+            assert!(smt.inclusion_proof(hashes[j]).is_none());
+            assert!(somt.inclusion_proof(hashes[j]).is_none());
+            assert!(somt.inclusion_proof_for_elem(&A(j)).is_none());
+
+            assert!(mt.consistency_proof(j as u64 + 1).is_none());
+            assert!(omt.consistency_proof(j as u64 + 1).is_none());
+            assert!(smt.consistency_proof(j as u64 + 1).is_none());
+            assert!(somt.consistency_proof(j as u64 + 1).is_none());
+
+        }
+    }
+}
+
+#[derive(Hash, Eq, PartialEq)]
+struct A(usize);
+impl digest::Digestible for A {
+    fn hash_bytes(&self, digest: &mut digest::Input) {
+        let mut b = [0; 8];
+        BigEndian::write_u64(&mut b, self.0 as u64);
+        digest.process(&b)
+    }
+}
