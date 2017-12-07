@@ -10,7 +10,7 @@ authors = ["Sebastian Hahn <sebastian@torproject.org>"]
 license = "BSD-3-Clause"
 repository = "https://github.com/shahn/merkle-rs"
 categories = ["data-structures", "cryptography"]
-keywords = ["Merkle", "Merkle-Tree", "Merkle Tree", "Consistency Proof"]
+keywords = ["Merkle", "Merkle-Tree", "MerkleTree", "ConsistencyProof"]
 
 [features]
 default = ["ring"]
