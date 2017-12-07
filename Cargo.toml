@@ -3,7 +3,7 @@ name = "merkle-rs"
 description = """
 Merkle-rs aims to provide a flexible yet complete implementation of the Merkle
 Tree data structure. It offers consistency and inclusion proofs as well as
-signatures."""
+optional support for cryptographic signatures."""
 
 version = "0.0.1"
 authors = ["Sebastian Hahn <sebastian@torproject.org>"]
