@@ -13,7 +13,7 @@ use merkle_rs::digest;
 
 #[test]
 fn large_tree() {
-    let max_size = 257;
+    let max_size = 129;
 
     let kp = KeyPair::new().unwrap();
     let okp = KeyPair::new().unwrap();

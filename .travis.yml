@@ -1,0 +1,28 @@
+language: rust
+
+rust:
+  - 1.20.0
+  - stable
+  - beta
+  - nightly
+
+matrix:
+  allow_failures:
+    - rust: nightly
+
+cache: cargo
+
+script:
+  - cargo build
+  - cargo build --features serde
+  - cargo build --no-default-features
+  - cargo build --no-default-features --features serde
+  - cargo test
+  - cargo test --features serde
+  - cargo test --no-default-features
+  - cargo test --no-default-features --features serde
+  - cargo doc --no-deps
+  - cargo doc --no-deps --features serde
+  - cargo doc --no-deps --no-default-features
+  - cargo doc --no-deps --no-default-features --features serde
+
