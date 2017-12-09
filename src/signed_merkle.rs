@@ -8,9 +8,9 @@ use proof::SignedInclusionProof;
 use ring::{rand, signature};
 #[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer};
-use std::error::Error;
 
-use std::fmt;
+use std::{fmt, iter};
+use std::error::Error;
 use untrusted;
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -94,6 +94,13 @@ impl<D: Digest> SignedMerkleTree<D> {
     }
 }
 
+impl<D: Digest> iter::Extend<Hash<D>> for SignedMerkleTree<D> {
+    fn extend<T: IntoIterator<Item = Hash<D>>>(&mut self, iter: T) {
+        self.mt.extend(iter);
+        self.sth = SignedTreeHead::new(&self.keypair, self.mt.head());
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct SignedOwningMerkleTree<T: Digestible, D: Digest> {
     smt: SignedMerkleTree<D>,
@@ -142,6 +149,17 @@ impl<T: Digestible, D: Digest> SignedOwningMerkleTree<T, D> {
         old_count: u64,
     ) -> Option<SignedConsistencyProof<D>> {
         self.smt.consistency_proof(old_count)
+    }
+}
+
+// XXX this is super inefficient. This should do a bulk-update. Have to be
+// careful not to insert duplicates into self.objs, though.
+impl<T: Digestible, D: Digest> iter::Extend<T>
+    for SignedOwningMerkleTree<T, D> {
+    fn extend<S: IntoIterator<Item = T>>(&mut self, iter: S) {
+        for x in iter {
+            self.insert(x);
+        }
     }
 }
 
