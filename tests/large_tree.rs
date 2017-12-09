@@ -11,6 +11,8 @@ use merkle_rs::{SignedMerkleTree, SignedOwningMerkleTree};
 use merkle_rs::KeyPair;
 use merkle_rs::digest;
 
+use std::iter::FromIterator;
+
 #[test]
 fn large_tree() {
     let max_size = 129;
@@ -61,6 +63,11 @@ fn large_tree() {
         assert!(heads[i].root_hash() == soheads[i].root_hash());
 
         for j in 0..i + 1 {
+            assert!(!mt.insert(hashes[j]));
+            assert!(!omt.insert(A(j)));
+            assert!(!smt.insert(hashes[j]));
+            assert!(!somt.insert(A(j)));
+
             assert!(mt.inclusion_proof(hashes[j]).unwrap().verify());
             assert!(omt.inclusion_proof(hashes[j]).unwrap().verify());
             assert!(omt.inclusion_proof_for_elem(&A(j)).unwrap().verify());
@@ -104,6 +111,34 @@ fn large_tree() {
 
         }
     }
+
+    let kp = KeyPair::new().unwrap();
+    let okp = KeyPair::new().unwrap();
+    let pubk = kp.pub_key();
+    let opubk = okp.pub_key();
+    let mut bulkmt =
+        MerkleTree::<sha2::Sha256>::from_iter(hashes.iter().cloned());
+    let mut bulkomt = OwningMerkleTree::<A, sha2::Sha256>::from_iter(
+        (0..max_size).map(|x| A(x)),
+    );
+    let mut bulksmt = SignedMerkleTree::<sha2::Sha256>::new(kp);
+    let mut bulksomt = SignedOwningMerkleTree::<A, sha2::Sha256>::new(okp);
+
+    assert!(bulkmt.head().root_hash() == heads[max_size - 1].root_hash());
+    bulkmt.extend(hashes.iter().cloned());
+    assert!(bulkmt.head().root_hash() == heads[max_size - 1].root_hash());
+
+    assert!(bulkomt.head().root_hash() == oheads[max_size - 1].root_hash());
+    bulkomt.extend((0..max_size).map(|x| A(x)));
+    assert!(bulkomt.head().root_hash() == heads[max_size - 1].root_hash());
+
+    bulksmt.extend(hashes.iter().cloned());
+    assert!(bulksmt.head().root_hash() == sheads[max_size - 1].root_hash());
+    assert!(bulksmt.head().verify(&pubk));
+
+    bulksomt.extend((0..max_size).map(|x| A(x)));
+    assert!(bulksomt.head().root_hash() == heads[max_size - 1].root_hash());
+    assert!(bulksomt.head().verify(&opubk));
 }
 
 #[derive(Hash, Eq, PartialEq)]

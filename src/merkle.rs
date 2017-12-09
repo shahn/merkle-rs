@@ -137,6 +137,24 @@ impl<D: Digest> Default for MerkleTree<D> {
     }
 }
 
+impl<D: Digest> iter::FromIterator<Hash<D>> for MerkleTree<D> {
+    fn from_iter<T: IntoIterator<Item = Hash<D>>>(iter: T) -> Self {
+        let mut mt = MerkleTree::new();
+        for x in iter {
+            mt.insert(x);
+        }
+        mt
+    }
+}
+
+impl<D: Digest> iter::Extend<Hash<D>> for MerkleTree<D> {
+    fn extend<T: IntoIterator<Item = Hash<D>>>(&mut self, iter: T) {
+        for x in iter {
+            self.insert(x);
+        }
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct OwningMerkleTree<T: Digestible, D: Digest> {
     mt: MerkleTree<D>,
@@ -188,5 +206,24 @@ impl<T: Digestible, D: Digest> OwningMerkleTree<T, D> {
 impl<T: Digestible, D: Digest> Default for OwningMerkleTree<T, D> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<T: Digestible, D: Digest> iter::FromIterator<T>
+    for OwningMerkleTree<T, D> {
+    fn from_iter<S: IntoIterator<Item = T>>(iter: S) -> Self {
+        let mut mt = OwningMerkleTree::new();
+        for x in iter {
+            mt.insert(x);
+        }
+        mt
+    }
+}
+
+impl<T: Digestible, D: Digest> iter::Extend<T> for OwningMerkleTree<T, D> {
+    fn extend<S: IntoIterator<Item = T>>(&mut self, iter: S) {
+        for x in iter {
+            self.insert(x);
+        }
     }
 }
