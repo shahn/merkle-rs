@@ -14,15 +14,15 @@ cache: cargo
 
 script:
   - cargo build
-  - cargo build --features serde
+  - cargo build --features use_serde
   - cargo build --no-default-features
-  - cargo build --no-default-features --features serde
+  - cargo build --no-default-features --features use_serde
   - cargo test
-  - cargo test --features serde
+  - cargo test --features use_serde
   - cargo test --no-default-features
-  - cargo test --no-default-features --features serde
+  - cargo test --no-default-features --features use_serde
   - cargo doc --no-deps
-  - cargo doc --no-deps --features serde
+  - cargo doc --no-deps --features use_serde
   - cargo doc --no-deps --no-default-features
-  - cargo doc --no-deps --no-default-features --features serde
+  - cargo doc --no-deps --no-default-features --features use_serde
 

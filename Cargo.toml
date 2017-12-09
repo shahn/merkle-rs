@@ -14,9 +14,10 @@ keywords = ["Merkle", "Merkle-Tree", "MerkleTree", "ConsistencyProof"]
 
 [features]
 default = ["ring"]
+use_serde = ["serde", "generic-array/serde"]
 
 [dependencies]
-generic-array = { version = "0.9.0", features = [ "serde" ] }
+generic-array = { version = "0.9.0" }
 digest = "0.7.2"
 ring = { version = "0.12.1", optional = true }
 untrusted = "0.5"
