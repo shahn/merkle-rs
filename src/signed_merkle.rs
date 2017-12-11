@@ -92,6 +92,11 @@ impl<D: Digest> SignedMerkleTree<D> {
             SignedConsistencyProof::new(x, self.head())
         })
     }
+
+    pub fn new_from_merkle_tree(keypair: KeyPair, mt: MerkleTree<D>) -> Self {
+        let sth = SignedTreeHead::new(&keypair, mt.head());
+        Self { mt, keypair, sth }
+    }
 }
 
 impl<D: Digest> iter::Extend<Hash<D>> for SignedMerkleTree<D> {
@@ -254,5 +259,23 @@ impl Error for RingError {
 impl From<::ring::error::Unspecified> for RingError {
     fn from(_: ::ring::error::Unspecified) -> Self {
         RingError
+    }
+}
+
+impl<D: Digest> From<SignedMerkleTree<D>> for MerkleTree<D> {
+    fn from(smt: SignedMerkleTree<D>) -> Self {
+        smt.mt
+    }
+}
+
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>> for MerkleTree<D> {
+    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
+        somt.smt.mt
+    }
+}
+
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>> for SignedMerkleTree<D> {
+    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
+        somt.smt
     }
 }
