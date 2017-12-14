@@ -228,7 +228,7 @@ impl<T: Digestible, D: Digest> iter::Extend<T> for OwningMerkleTree<T, D> {
     }
 }
 
-impl<T: Digestible, D: Digest>  From<OwningMerkleTree<T, D>> for MerkleTree<D> {
+impl<T: Digestible, D: Digest> From<OwningMerkleTree<T, D>> for MerkleTree<D> {
     fn from(omt: OwningMerkleTree<T, D>) -> Self {
         omt.mt
     }
