@@ -268,13 +268,15 @@ impl<D: Digest> From<SignedMerkleTree<D>> for MerkleTree<D> {
     }
 }
 
-impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>> for MerkleTree<D> {
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
+    for MerkleTree<D> {
     fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
         somt.smt.mt
     }
 }
 
-impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>> for SignedMerkleTree<D> {
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
+    for SignedMerkleTree<D> {
     fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
         somt.smt
     }
