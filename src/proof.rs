@@ -119,11 +119,11 @@ impl<D: Digest> ConsistencyProofBase<D> {
         }
 
         let mut n0 = self.old_size;
-        let mut hashes: Vec<Hash<D>> = Vec::new();
+        let mut hashes: Vec<&Hash<D>> = Vec::new();
         let mut flag = false;
         for h in &self.hashes {
             if flag {
-                hashes.push(h.clone());
+                hashes.push(h);
                 break;
             }
             let k = n1.next_power_of_two() / 2;
@@ -132,7 +132,7 @@ impl<D: Digest> ConsistencyProofBase<D> {
             } else if n0 == k {
                 flag = true;
             } else {
-                hashes.push(h.clone());
+                hashes.push(h);
                 n0 -= k;
                 n1 -= k;
             }
