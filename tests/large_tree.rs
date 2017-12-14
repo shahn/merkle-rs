@@ -119,7 +119,7 @@ fn large_tree() {
     let mut bulkmt =
         MerkleTree::<sha2::Sha256>::from_iter(hashes.iter().cloned());
     let mut bulkomt = OwningMerkleTree::<A, sha2::Sha256>::from_iter(
-        (0..max_size).map(|x| A(x)),
+        (0..max_size).map(A),
     );
     let mut bulksmt = SignedMerkleTree::<sha2::Sha256>::new(kp);
     let mut bulksomt = SignedOwningMerkleTree::<A, sha2::Sha256>::new(okp);
@@ -129,14 +129,14 @@ fn large_tree() {
     assert!(bulkmt.head().root_hash() == heads[max_size - 1].root_hash());
 
     assert!(bulkomt.head().root_hash() == oheads[max_size - 1].root_hash());
-    bulkomt.extend((0..max_size).map(|x| A(x)));
+    bulkomt.extend((0..max_size).map(A));
     assert!(bulkomt.head().root_hash() == heads[max_size - 1].root_hash());
 
     bulksmt.extend(hashes.iter().cloned());
     assert!(bulksmt.head().root_hash() == sheads[max_size - 1].root_hash());
     assert!(bulksmt.head().verify(&pubk));
 
-    bulksomt.extend((0..max_size).map(|x| A(x)));
+    bulksomt.extend((0..max_size).map(A));
     assert!(bulksomt.head().root_hash() == heads[max_size - 1].root_hash());
     assert!(bulksomt.head().verify(&opubk));
 }
