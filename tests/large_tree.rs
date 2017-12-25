@@ -118,9 +118,8 @@ fn large_tree() {
     let opubk = okp.pub_key();
     let mut bulkmt =
         MerkleTree::<sha2::Sha256>::from_iter(hashes.iter().cloned());
-    let mut bulkomt = OwningMerkleTree::<A, sha2::Sha256>::from_iter(
-        (0..max_size).map(A),
-    );
+    let mut bulkomt =
+        OwningMerkleTree::<A, sha2::Sha256>::from_iter((0..max_size).map(A));
     let mut bulksmt = SignedMerkleTree::<sha2::Sha256>::new(kp);
     let mut bulksomt = SignedOwningMerkleTree::<A, sha2::Sha256>::new(okp);
 
