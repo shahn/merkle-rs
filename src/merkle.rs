@@ -2,13 +2,15 @@ use digest::Digest;
 use digest::Digestible;
 use digest::Hash;
 use proof::*;
-use std::collections::hash_map;
+
+use std::collections::{HashMap, hash_map};
 use std::iter;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub struct TreeHead<D: Digest> {
     count: u64,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     hash: Hash<D>,
 }
 
@@ -25,7 +27,9 @@ impl<D: Digest> TreeHead<D> {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub struct MerkleTree<D: Digest> {
-    pub(crate) map: hash_map::HashMap<Hash<D>, usize>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
+    pub(crate) map: HashMap<Hash<D>, usize>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     pub(crate) tree: Vec<Hash<D>>,
 }
 
@@ -33,7 +37,7 @@ impl<D: Digest> MerkleTree<D> {
     pub fn new() -> MerkleTree<D> {
         let empty = D::default().fixed_result();
         let mut m = MerkleTree::<D> {
-            map: hash_map::HashMap::new(),
+            map: HashMap::new(),
             tree: Vec::new(),
         };
         m.tree.push(empty.clone());
@@ -157,6 +161,7 @@ impl<D: Digest> iter::Extend<Hash<D>> for MerkleTree<D> {
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct OwningMerkleTree<T: Digestible, D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     mt: MerkleTree<D>,
     objs: Vec<T>,
 }

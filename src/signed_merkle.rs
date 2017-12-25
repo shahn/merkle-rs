@@ -16,6 +16,7 @@ use untrusted;
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Clone)]
 pub struct SignedTreeHead<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     th: TreeHead<D>,
     sig: Vec<u8>,
 }
@@ -48,8 +49,10 @@ impl<D: Digest> SignedTreeHead<D> {
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct SignedMerkleTree<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     mt: MerkleTree<D>,
     keypair: KeyPair,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     sth: SignedTreeHead<D>,
 }
 
@@ -108,6 +111,7 @@ impl<D: Digest> iter::Extend<Hash<D>> for SignedMerkleTree<D> {
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct SignedOwningMerkleTree<T: Digestible, D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     smt: SignedMerkleTree<D>,
     objs: Vec<T>,
 }
