@@ -19,8 +19,8 @@ use_serde = ["serde", "generic-array/serde"]
 [dependencies]
 generic-array = { version = "0.9.0" }
 digest = "0.7.2"
-ring = { version = "0.12.1", optional = true }
-untrusted = "0.5"
+ring = { version = "0.13.0-alpha", optional = true }
+untrusted = "0.6.1"
 serde = { version = "1.0.23", optional = true, features = [ "derive" ] }
 
 [profile.release]
@@ -30,7 +30,7 @@ debug = true
 rmp-serde = "0.13.7"
 sha2 = "0.7.0"
 byteorder = "1.2.1"
-ring = "0.12.1"
+ring = "0.13.0-alpha"
 
 [badges]
 maintenance = { status = "experimental" }
