@@ -31,7 +31,7 @@ rmp-serde = "0.13.7"
 sha2 = "0.7.0"
 byteorder = "1.2.1"
 ring = "0.13.0-alpha"
-criterion = { version = "0.1.1" }
+criterion = { git = "https://github.com/japaric/criterion.rs" }
 
 [[bench]]
 name = "bench"
