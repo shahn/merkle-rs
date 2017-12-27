@@ -120,6 +120,11 @@ impl<D: Digest> MerkleTree<D> {
         })
     }
 
+    pub fn leaf_hashes(&self) -> &[Hash<D>] {
+        let first_elem = self.tree.len() / 2;
+        &self.tree[first_elem..]
+    }
+
     pub(crate) fn len(&self) -> usize {
         self.map.len()
     }
