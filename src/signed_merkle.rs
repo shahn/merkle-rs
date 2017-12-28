@@ -220,7 +220,7 @@ impl KeyPair {
 pub struct PubKey([u8; signature::ED25519_PUBLIC_KEY_LEN]);
 
 impl PubKey {
-    fn new(bytes: &[u8]) -> Self {
+    pub fn new(bytes: &[u8]) -> Self {
         let mut arr = [0; signature::ED25519_PUBLIC_KEY_LEN];
         arr.copy_from_slice(bytes);
         PubKey(arr)

@@ -17,10 +17,16 @@ pub mod proof;
 
 pub use merkle::MerkleTree;
 pub use merkle::OwningMerkleTree;
+pub use merkle::TreeHead;
+pub use proof::{InclusionProof, ConsistencyProof};
 
 #[cfg(feature = "ring")]
-pub use signed_merkle::KeyPair;
+pub use signed_merkle::{KeyPair,PubKey};
 #[cfg(feature = "ring")]
 pub use signed_merkle::SignedMerkleTree;
 #[cfg(feature = "ring")]
 pub use signed_merkle::SignedOwningMerkleTree;
+#[cfg(feature = "ring")]
+pub use signed_merkle::SignedTreeHead;
+#[cfg(feature = "ring")]
+pub use proof::{SignedInclusionProof,SignedConsistencyProof};
