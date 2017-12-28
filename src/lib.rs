@@ -1,5 +1,6 @@
 extern crate digest as extern_digest;
 extern crate untrusted;
+extern crate typenum;
 
 #[cfg(feature = "ring")]
 extern crate ring;

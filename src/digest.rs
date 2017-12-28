@@ -1,6 +1,7 @@
 use extern_digest;
 use extern_digest::generic_array;
 use std::hash;
+use typenum::Unsigned;
 
 pub type Hash<D> =
     generic_array::GenericArray<
@@ -21,6 +22,7 @@ pub trait Digest: extern_digest::Digest + Clone {
     fn hash_elem<T: Digestible>(elem: &T) -> Hash<Self>;
     fn hash_leaf(elem: &Hash<Self>) -> Hash<Self>;
     fn hash_inner(l: &Hash<Self>, r: &Hash<Self>) -> Hash<Self>;
+    fn from_slice(&[u8]) -> Result<Hash<Self>, ()>;
 }
 
 impl<T> Digest for T
@@ -49,6 +51,13 @@ where
         hasher.process(l);
         hasher.process(r);
         hasher.fixed_result()
+    }
+
+    fn from_slice(sl: &[u8]) -> Result<Hash<Self>, ()> {
+        if sl.len() != <Self as extern_digest::FixedOutput>::OutputSize::to_usize() {
+            return Err(())
+        }
+        Ok(generic_array::GenericArray::clone_from_slice(sl))
     }
 }
 
