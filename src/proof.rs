@@ -4,9 +4,12 @@ use merkle::{MerkleTree, TreeHead};
 #[cfg(feature = "ring")]
 use signed_merkle::{PubKey, SignedTreeHead};
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct InclusionProofBase<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     obj: Hash<D>,
     pos: u64,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     hashes: Vec<Hash<D>>,
 }
 
@@ -67,8 +70,10 @@ impl<D: Digest> InclusionProofBase<D> {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConsistencyProofBase<D: Digest> {
     old_size: u64,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     hashes: Vec<Hash<D>>,
 }
 
@@ -186,9 +191,11 @@ impl<D: Digest> ConsistencyProofBase<D> {
     }
 }
 
-
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InclusionProof<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     base: InclusionProofBase<D>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     th: TreeHead<D>,
 }
 
@@ -202,8 +209,11 @@ impl<D: Digest> InclusionProof<D> {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ConsistencyProof<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     base: ConsistencyProofBase<D>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     th: TreeHead<D>,
 }
 
@@ -225,8 +235,11 @@ impl<D: Digest> ConsistencyProof<D> {
 }
 
 #[cfg(feature = "ring")]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SignedInclusionProof<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     base: InclusionProofBase<D>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     sth: SignedTreeHead<D>,
 }
 
@@ -249,8 +262,11 @@ impl<D: Digest> SignedInclusionProof<D> {
 }
 
 #[cfg(feature = "ring")]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SignedConsistencyProof<D: Digest> {
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     base: ConsistencyProofBase<D>,
+    #[cfg_attr(feature = "serde", serde(bound = ""))]
     sth: SignedTreeHead<D>,
 }
 
