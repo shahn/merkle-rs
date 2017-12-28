@@ -259,6 +259,10 @@ impl<D: Digest> SignedInclusionProof<D> {
             false
         }
     }
+
+    pub fn head(&self) -> &SignedTreeHead<D> {
+        &self.sth
+    }
 }
 
 #[cfg(feature = "ring")]
