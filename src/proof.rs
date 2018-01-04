@@ -1,6 +1,5 @@
 use digest::{Digest, Hash};
 use merkle::{MerkleTree, TreeHead};
-
 #[cfg(feature = "ring")]
 use signed_merkle::{PubKey, SignedTreeHead};
 
@@ -14,7 +13,8 @@ pub(crate) struct InclusionProofBase<D: Digest> {
 }
 
 impl<D: Digest> InclusionProofBase<D> {
-    pub(crate) fn new(h: Hash<D>, mt: &MerkleTree<D>) -> Option<Self> {
+    pub(crate) fn new<M: AsMerkleTree<D>>(h: Hash<D>, mt: &M) -> Option<Self> {
+        let mt = mt.as_merkle_tree();
         if let Some(&i) = mt.map.get(&h) {
             let mut hashes = Vec::new();
             let offset = mt.get_offset();
@@ -40,7 +40,6 @@ impl<D: Digest> InclusionProofBase<D> {
             None
         }
     }
-
 
     fn calc(&self, mut n: u64) -> Hash<D> {
         let mut hash = D::hash_leaf(&self.obj);
@@ -78,8 +77,11 @@ pub(crate) struct ConsistencyProofBase<D: Digest> {
 }
 
 impl<D: Digest> ConsistencyProofBase<D> {
-    pub(crate) fn new(old_size: u64, mt: &MerkleTree<D>) -> Option<Self> {
-
+    pub(crate) fn new<M: AsMerkleTree<D>>(
+        old_size: u64,
+        mt: &M,
+    ) -> Option<Self> {
+        let mt = mt.as_merkle_tree();
         let mut n = mt.len() as u64;
         let mut m = old_size;
         let mut hashes = Vec::new();
@@ -118,7 +120,6 @@ impl<D: Digest> ConsistencyProofBase<D> {
     }
 
     fn calc_old(&self, mut n1: u64, old_treehead: &Hash<D>) -> Hash<D> {
-
         if self.hashes.is_empty() {
             return old_treehead.clone();
         }
@@ -141,7 +142,6 @@ impl<D: Digest> ConsistencyProofBase<D> {
                 n0 -= k;
                 n1 -= k;
             }
-
         }
         /* XXXif !flag {
             return false;
@@ -155,7 +155,6 @@ impl<D: Digest> ConsistencyProofBase<D> {
     }
 
     fn calc_new(&self, mut n1: u64, old_treehead: &Hash<D>) -> Hash<D> {
-
         if self.hashes.is_empty() {
             return old_treehead.clone();
         }
@@ -174,7 +173,6 @@ impl<D: Digest> ConsistencyProofBase<D> {
             }
         }
         order.push(Order::Right);
-
 
         let mut hashcalc = self.hashes[self.hashes.len() - 1].clone();
 
@@ -277,18 +275,17 @@ impl<D: Digest> SignedConsistencyProof<D> {
         sth: SignedTreeHead<D>,
     ) -> Self {
         Self { base, sth }
-
     }
 
     pub fn verify(&self, old_treehead: &Hash<D>, pk: &PubKey) -> bool {
         if self.sth.verify(pk) {
-            if self.base.calc_old(self.sth.size(), old_treehead) !=
-                *old_treehead
+            if self.base.calc_old(self.sth.size(), old_treehead)
+                != *old_treehead
             {
                 return false;
             }
-            self.base.calc_new(self.sth.size(), old_treehead) ==
-                *self.sth.root_hash()
+            self.base.calc_new(self.sth.size(), old_treehead)
+                == *self.sth.root_hash()
         } else {
             false
         }
@@ -299,4 +296,8 @@ impl<D: Digest> SignedConsistencyProof<D> {
 enum Order {
     Left,
     Right,
+}
+
+pub(crate) trait AsMerkleTree<D: Digest> {
+    fn as_merkle_tree(&self) -> &MerkleTree<D>;
 }

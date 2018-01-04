@@ -16,7 +16,6 @@ pub mod proof;
 
 pub use merkle::MerkleTree;
 pub use merkle::OwningMerkleTree;
-
 #[cfg(feature = "ring")]
 pub use signed_merkle::KeyPair;
 #[cfg(feature = "ring")]

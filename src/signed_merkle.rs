@@ -1,14 +1,14 @@
 use digest::{Digest, Digestible};
+use digest::AsHash;
 use digest::Hash;
-
-use merkle::{MerkleTree, TreeHead};
+use merkle::{MerkleTree, OwningMerkleTree, TreeHead};
 use proof::*;
-
 use proof::SignedInclusionProof;
 use ring::{rand, signature};
 #[cfg(feature = "serde")]
-use serde::de::{self, Deserialize, Deserializer};
-
+use serde::{Deserialize, Deserializer, Serialize};
+#[cfg(feature = "serde")]
+use serde::de::Error as SerdeError;
 use std::{fmt, iter};
 use std::error::Error;
 use untrusted;
@@ -56,118 +56,111 @@ pub struct SignedMerkleTree<D: Digest> {
     sth: SignedTreeHead<D>,
 }
 
-impl<D: Digest> SignedMerkleTree<D> {
-    pub fn new(keypair: KeyPair) -> Self {
-
-        let mt = MerkleTree::new();
-        let sth = SignedTreeHead::new(&keypair, mt.head());
-
-        Self { mt, keypair, sth }
-    }
-
-    pub fn insert(&mut self, hash: Hash<D>) -> bool {
-        if self.mt.insert(hash) {
-            self.sth = SignedTreeHead::new(&self.keypair, self.mt.head());
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn head(&self) -> SignedTreeHead<D> {
-        self.sth.clone()
-    }
-
-    pub fn inclusion_proof(
-        &self,
-        h: Hash<D>,
-    ) -> Option<SignedInclusionProof<D>> {
-        InclusionProofBase::new(h, &self.mt).map(|x| {
-            SignedInclusionProof::new(x, self.head())
-        })
-    }
-
-    pub fn consistency_proof(
-        &self,
-        old_size: u64,
-    ) -> Option<SignedConsistencyProof<D>> {
-        ConsistencyProofBase::new(old_size, &self.mt).map(|x| {
-            SignedConsistencyProof::new(x, self.head())
-        })
-    }
-
-    pub fn new_from_merkle_tree(keypair: KeyPair, mt: MerkleTree<D>) -> Self {
-        let sth = SignedTreeHead::new(&keypair, mt.head());
-        Self { mt, keypair, sth }
-    }
-}
-
-impl<D: Digest> iter::Extend<Hash<D>> for SignedMerkleTree<D> {
-    fn extend<T: IntoIterator<Item = Hash<D>>>(&mut self, iter: T) {
-        self.mt.extend(iter);
-        self.sth = SignedTreeHead::new(&self.keypair, self.mt.head());
-    }
-}
-
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct SignedOwningMerkleTree<T: Digestible, D: Digest> {
+    #[cfg_attr(feature = "serde", serde(
+            bound(serialize = "OwningMerkleTree<T, D>: Serialize",
+                  deserialize = "OwningMerkleTree<T, D>: Deserialize<'de>")))]
+    mt: OwningMerkleTree<T, D>,
+    keypair: KeyPair,
     #[cfg_attr(feature = "serde", serde(bound = ""))]
-    smt: SignedMerkleTree<D>,
-    objs: Vec<T>,
+    sth: SignedTreeHead<D>,
 }
 
-impl<T: Digestible, D: Digest> SignedOwningMerkleTree<T, D> {
-    pub fn new(keypair: KeyPair) -> Self {
-        Self {
-            smt: SignedMerkleTree::new(keypair),
-            objs: Vec::new(),
+macro_rules! impl_signed_tree {
+    ( $name:ident, $base: ident, ($( $par:ident : $bound:ident, )*),
+    $elt:ident, ($( $et_bound:ident, )*) ) => {
+        impl<$( $par: $bound, )* D: Digest> $name<$( $par, )* D> {
+            pub fn new(keypair: KeyPair) -> Self {
+                let mt = $base::new();
+                let sth = SignedTreeHead::new(&keypair, mt.head());
+
+                Self { mt, keypair, sth }
+            }
+
+            pub fn from_unsigned(keypair: KeyPair,
+                                 mt: $base<$( $par, )* D>) -> Self {
+                let sth = SignedTreeHead::new(&keypair, mt.head());
+                Self { mt, keypair, sth }
+            }
+
+            pub fn insert<$( $elt: AsHash<$et_bound> )*>(&mut self,
+                                                         elem: $elt) -> bool {
+                if self.mt.insert(elem) {
+                    self.sth = SignedTreeHead::new(&self.keypair,
+                                                   self.mt.head());
+                    true
+                } else {
+                    false
+                }
+            }
+
+            pub fn head(&self) -> SignedTreeHead<D> {
+                self.sth.clone()
+            }
+
+            pub fn inclusion_proof<H: AsHash<D>>(
+                &self,
+                h: H,
+            ) -> Option<SignedInclusionProof<D>> {
+                let h = h.as_hash();
+                InclusionProofBase::new(h, &self.mt).map(|x| {
+                    SignedInclusionProof::new(x, self.head())
+                })
+            }
+
+            pub fn consistency_proof(
+                &self,
+                old_size: u64,
+            ) -> Option<SignedConsistencyProof<D>> {
+                ConsistencyProofBase::new(old_size, &self.mt).map(|x| {
+                    SignedConsistencyProof::new(x, self.head())
+                })
+            }
         }
-    }
 
-    pub fn insert(&mut self, elem: T) -> bool {
-        let hash = D::hash_elem(&elem);
-
-        if self.smt.insert(hash) {
-            self.objs.push(elem);
-            true
-        } else {
-            false
+        impl<$( $par: $bound, )* $( $elt: AsHash<$et_bound>, )* D: Digest>
+                iter::Extend<$elt> for $name<$( $par, )* D> {
+            fn extend<S: IntoIterator<Item = $elt>>(&mut
+            self, iter: S) {
+                self.mt.extend(iter);
+                self.sth = SignedTreeHead::new(&self.keypair, self.mt.head())
+            }
         }
-    }
 
-    pub fn head(&self) -> SignedTreeHead<D> {
-        self.smt.sth.clone()
-    }
-
-    pub fn inclusion_proof(
-        &self,
-        h: Hash<D>,
-    ) -> Option<SignedInclusionProof<D>> {
-        self.smt.inclusion_proof(h)
-    }
-
-    pub fn inclusion_proof_for_elem(
-        &self,
-        elem: &T,
-    ) -> Option<SignedInclusionProof<D>> {
-        self.smt.inclusion_proof(D::hash_elem(elem))
-    }
-
-    pub fn consistency_proof(
-        &self,
-        old_count: u64,
-    ) -> Option<SignedConsistencyProof<D>> {
-        self.smt.consistency_proof(old_count)
+        impl<$( $par: $bound, )* D: Digest> From<$name<$( $par, )* D>> for
+        $base<$( $par, )* D> {
+            fn from(mt: $name<$( $par, )* D>) -> Self {
+                mt.mt
+            }
+        }
     }
 }
 
-// XXX this is super inefficient. This should do a bulk-update. Have to be
-// careful not to insert duplicates into self.objs, though.
-impl<T: Digestible, D: Digest> iter::Extend<T>
-    for SignedOwningMerkleTree<T, D> {
-    fn extend<S: IntoIterator<Item = T>>(&mut self, iter: S) {
-        for x in iter {
-            self.insert(x);
+impl_signed_tree!(SignedMerkleTree, MerkleTree, (), H, (D,));
+impl_signed_tree!(
+    SignedOwningMerkleTree,
+    OwningMerkleTree,
+    (T: Digestible,),
+    T,
+    ()
+);
+
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
+    for MerkleTree<D> {
+    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
+        let omt: OwningMerkleTree<T, D> = From::from(somt);
+        From::from(omt)
+    }
+}
+
+impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
+    for SignedMerkleTree<D> {
+    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
+        SignedMerkleTree {
+            mt: somt.mt.into(),
+            keypair: somt.keypair,
+            sth: somt.sth,
         }
     }
 }
@@ -241,7 +234,7 @@ impl<'de> Deserialize<'de> for KeyPair {
 
         let cbytes: [u8; signature::ED25519_PKCS8_V2_LEN] =
             unsafe { ::std::mem::transmute(bytes.0) };
-        KeyPair::new_from_bytes(cbytes).map_err(de::Error::custom)
+        KeyPair::new_from_bytes(cbytes).map_err(SerdeError::custom)
     }
 }
 
@@ -263,25 +256,5 @@ impl Error for RingError {
 impl From<::ring::error::Unspecified> for RingError {
     fn from(_: ::ring::error::Unspecified) -> Self {
         RingError
-    }
-}
-
-impl<D: Digest> From<SignedMerkleTree<D>> for MerkleTree<D> {
-    fn from(smt: SignedMerkleTree<D>) -> Self {
-        smt.mt
-    }
-}
-
-impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
-    for MerkleTree<D> {
-    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
-        somt.smt.mt
-    }
-}
-
-impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
-    for SignedMerkleTree<D> {
-    fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
-        somt.smt
     }
 }

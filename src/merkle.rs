@@ -1,9 +1,10 @@
+use digest::AsHash;
 use digest::Digest;
 use digest::Digestible;
 use digest::Hash;
 use proof::*;
-
-use std::collections::{HashMap, hash_map};
+use proof::AsMerkleTree;
+use std::collections::{hash_map, HashMap};
 use std::iter;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -45,7 +46,8 @@ impl<D: Digest> MerkleTree<D> {
         m
     }
 
-    pub fn insert(&mut self, hash: Hash<D>) -> bool {
+    pub fn insert<H: AsHash<D>>(&mut self, hash: H) -> bool {
+        let hash = hash.as_hash();
 
         let mut tlen = self.tree.len();
         let count = self.len();
@@ -73,18 +75,16 @@ impl<D: Digest> MerkleTree<D> {
                     D::hash_inner(&self.tree[pos - 1], &self.tree[pos]);
             }
             pos /= 2;
-
         }
 
         true
     }
 
-
     fn inc_height(&mut self) {
         let t = &mut self.tree;
         let old_len = t.len();
         let new_len = old_len * 2;
-        t.reserve(old_len);
+        t.reserve(new_len);
         let x = D::default().fixed_result();
         t.extend(iter::repeat(x).take(old_len));
         let mut rem_len = new_len;
@@ -103,21 +103,22 @@ impl<D: Digest> MerkleTree<D> {
         }
     }
 
-    pub fn inclusion_proof(&self, h: Hash<D>) -> Option<InclusionProof<D>> {
+    pub fn inclusion_proof<H: AsHash<D>>(
+        &self,
+        h: H,
+    ) -> Option<InclusionProof<D>> {
+        let h = h.as_hash();
 
-        InclusionProofBase::new(h, self).map(|x| {
-            InclusionProof::new(x, self.head())
-        })
+        InclusionProofBase::new(h, self)
+            .map(|x| InclusionProof::new(x, self.head()))
     }
 
     pub fn consistency_proof(
         &self,
         old_size: u64,
     ) -> Option<ConsistencyProof<D>> {
-
-        ConsistencyProofBase::new(old_size, self).map(|x| {
-            ConsistencyProof::new(x, self.head())
-        })
+        ConsistencyProofBase::new(old_size, self)
+            .map(|x| ConsistencyProof::new(x, self.head()))
     }
 
     pub(crate) fn len(&self) -> usize {
@@ -141,18 +142,16 @@ impl<D: Digest> Default for MerkleTree<D> {
     }
 }
 
-impl<D: Digest> iter::FromIterator<Hash<D>> for MerkleTree<D> {
-    fn from_iter<T: IntoIterator<Item = Hash<D>>>(iter: T) -> Self {
+impl<D: Digest, H: AsHash<D>> iter::FromIterator<H> for MerkleTree<D> {
+    fn from_iter<T: IntoIterator<Item = H>>(iter: T) -> Self {
         let mut mt = MerkleTree::new();
-        for x in iter {
-            mt.insert(x);
-        }
+        mt.extend(iter);
         mt
     }
 }
 
-impl<D: Digest> iter::Extend<Hash<D>> for MerkleTree<D> {
-    fn extend<T: IntoIterator<Item = Hash<D>>>(&mut self, iter: T) {
+impl<D: Digest, H: AsHash<D>> iter::Extend<H> for MerkleTree<D> {
+    fn extend<T: IntoIterator<Item = H>>(&mut self, iter: T) {
         for x in iter {
             self.insert(x);
         }
@@ -189,15 +188,11 @@ impl<T: Digestible, D: Digest> OwningMerkleTree<T, D> {
         self.mt.head()
     }
 
-    pub fn inclusion_proof(&self, h: Hash<D>) -> Option<InclusionProof<D>> {
-        self.mt.inclusion_proof(h)
-    }
-
-    pub fn inclusion_proof_for_elem(
+    pub fn inclusion_proof<H: AsHash<D>>(
         &self,
-        elem: &T,
+        h: H,
     ) -> Option<InclusionProof<D>> {
-        self.mt.inclusion_proof(D::hash_elem(elem))
+        self.mt.inclusion_proof(h)
     }
 
     pub fn consistency_proof(
@@ -218,9 +213,7 @@ impl<T: Digestible, D: Digest> iter::FromIterator<T>
     for OwningMerkleTree<T, D> {
     fn from_iter<S: IntoIterator<Item = T>>(iter: S) -> Self {
         let mut mt = OwningMerkleTree::new();
-        for x in iter {
-            mt.insert(x);
-        }
+        mt.extend(iter);
         mt
     }
 }
@@ -236,5 +229,17 @@ impl<T: Digestible, D: Digest> iter::Extend<T> for OwningMerkleTree<T, D> {
 impl<T: Digestible, D: Digest> From<OwningMerkleTree<T, D>> for MerkleTree<D> {
     fn from(omt: OwningMerkleTree<T, D>) -> Self {
         omt.mt
+    }
+}
+
+impl<D: Digest> AsMerkleTree<D> for MerkleTree<D> {
+    fn as_merkle_tree(&self) -> &MerkleTree<D> {
+        self
+    }
+}
+
+impl<T: Digestible, D: Digest> AsMerkleTree<D> for OwningMerkleTree<T, D> {
+    fn as_merkle_tree(&self) -> &MerkleTree<D> {
+        &self.mt
     }
 }

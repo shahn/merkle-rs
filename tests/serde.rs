@@ -1,17 +1,15 @@
-#![cfg(feature="serde")]
-#![cfg(feature="ring")]
+#![cfg(feature = "serde")]
+#![cfg(feature = "ring")]
 
-extern crate rmp_serde;
+extern crate byteorder;
 extern crate merkle_rs;
+extern crate rmp_serde;
 extern crate serde;
 extern crate sha2;
-extern crate byteorder;
 
 use byteorder::{BigEndian, ByteOrder};
-use merkle_rs::{KeyPair, MerkleTree, digest};
+use merkle_rs::{digest, KeyPair, MerkleTree};
 use serde::Serialize;
-
-
 
 #[test]
 fn keypair_serde() {
@@ -39,8 +37,8 @@ fn tree_serde() {
         .unwrap();
     let buf2 = buf.clone();
     let mut de = rmp_serde::Deserializer::new(&buf[..]);
-    let x: MerkleTree<sha2::Sha256> = serde::Deserialize::deserialize(&mut de)
-        .unwrap();
+    let x: MerkleTree<sha2::Sha256> =
+        serde::Deserialize::deserialize(&mut de).unwrap();
     let mut buf = Vec::new();
     x.serialize(&mut rmp_serde::Serializer::new(&mut buf))
         .unwrap();
