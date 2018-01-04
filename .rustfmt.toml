@@ -2,3 +2,4 @@ max_width = 80
 comment_width = 80
 reorder_imports = true
 reorder_imported_names = true
+same_line_attributes = false

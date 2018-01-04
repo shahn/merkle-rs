@@ -1,16 +1,15 @@
 #![cfg(feature = "ring")]
+extern crate byteorder;
+extern crate merkle_rs;
 extern crate ring;
 extern crate sha2;
 extern crate untrusted;
-extern crate merkle_rs;
-extern crate byteorder;
 
 use byteorder::{BigEndian, ByteOrder};
 use merkle_rs::{MerkleTree, OwningMerkleTree};
 use merkle_rs::{SignedMerkleTree, SignedOwningMerkleTree};
 use merkle_rs::KeyPair;
 use merkle_rs::digest;
-
 use std::iter::FromIterator;
 
 #[test]
@@ -70,45 +69,48 @@ fn large_tree() {
 
             assert!(mt.inclusion_proof(hashes[j]).unwrap().verify());
             assert!(omt.inclusion_proof(hashes[j]).unwrap().verify());
-            assert!(omt.inclusion_proof_for_elem(&A(j)).unwrap().verify());
+            assert!(omt.inclusion_proof(&A(j)).unwrap().verify());
 
             assert!(smt.inclusion_proof(hashes[j]).unwrap().verify(&pubk));
             assert!(somt.inclusion_proof(hashes[j]).unwrap().verify(&opubk));
-            assert!(
-                somt.inclusion_proof_for_elem(&A(j)).unwrap().verify(&opubk)
-            );
+            assert!(somt.inclusion_proof(&A(j)).unwrap().verify(&opubk));
 
-            assert!(mt.consistency_proof(j as u64 + 1).unwrap().verify(
-                heads[j].root_hash(),
-            ));
-            assert!(omt.consistency_proof(j as u64 + 1).unwrap().verify(
-                heads[j].root_hash(),
-            ));
-            assert!(smt.consistency_proof(j as u64 + 1).unwrap().verify(
-                heads[j].root_hash(),
-                &pubk,
-            ));
-            assert!(somt.consistency_proof(j as u64 + 1).unwrap().verify(
-                heads[j].root_hash(),
-                &opubk,
-            ));
+            assert!(
+                mt.consistency_proof(j as u64 + 1,)
+                    .unwrap()
+                    .verify(heads[j].root_hash(),)
+            );
+            assert!(
+                omt.consistency_proof(j as u64 + 1,)
+                    .unwrap()
+                    .verify(heads[j].root_hash(),)
+            );
+            assert!(
+                smt.consistency_proof(j as u64 + 1,)
+                    .unwrap()
+                    .verify(heads[j].root_hash(), &pubk,)
+            );
+            assert!(
+                somt.consistency_proof(j as u64 + 1,)
+                    .unwrap()
+                    .verify(heads[j].root_hash(), &opubk,)
+            );
         }
 
         #[cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
         for j in i + 1..max_size {
             assert!(mt.inclusion_proof(hashes[j]).is_none());
             assert!(omt.inclusion_proof(hashes[j]).is_none());
-            assert!(omt.inclusion_proof_for_elem(&A(j)).is_none());
+            assert!(omt.inclusion_proof(&A(j)).is_none());
 
             assert!(smt.inclusion_proof(hashes[j]).is_none());
             assert!(somt.inclusion_proof(hashes[j]).is_none());
-            assert!(somt.inclusion_proof_for_elem(&A(j)).is_none());
+            assert!(somt.inclusion_proof(&A(j)).is_none());
 
             assert!(mt.consistency_proof(j as u64 + 1).is_none());
             assert!(omt.consistency_proof(j as u64 + 1).is_none());
             assert!(smt.consistency_proof(j as u64 + 1).is_none());
             assert!(somt.consistency_proof(j as u64 + 1).is_none());
-
         }
     }
 
