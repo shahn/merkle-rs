@@ -155,7 +155,8 @@ impl_signed_tree!(
 );
 
 impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
-    for MerkleTree<D> {
+    for MerkleTree<D>
+{
     fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
         let omt: OwningMerkleTree<T, D> = From::from(somt);
         From::from(omt)
@@ -163,7 +164,8 @@ impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
 }
 
 impl<T: Digestible, D: Digest> From<SignedOwningMerkleTree<T, D>>
-    for SignedMerkleTree<D> {
+    for SignedMerkleTree<D>
+{
     fn from(somt: SignedOwningMerkleTree<T, D>) -> Self {
         SignedMerkleTree {
             mt: somt.mt.into(),
