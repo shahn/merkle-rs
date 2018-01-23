@@ -218,7 +218,8 @@ impl<T: Digestible, D: Digest> Default for OwningMerkleTree<T, D> {
 }
 
 impl<T: Digestible, D: Digest> iter::FromIterator<T>
-    for OwningMerkleTree<T, D> {
+    for OwningMerkleTree<T, D>
+{
     fn from_iter<S: IntoIterator<Item = T>>(iter: S) -> Self {
         let mut mt = OwningMerkleTree::new();
         mt.extend(iter);
