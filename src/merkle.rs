@@ -8,11 +8,19 @@ use std::collections::{hash_map, HashMap};
 use std::iter;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone)]
 pub struct TreeHead<D: Digest> {
     count: u64,
     #[cfg_attr(feature = "serde", serde(bound = ""))]
     hash: Hash<D>,
+}
+
+impl<D: Digest> Clone for TreeHead<D> {
+    fn clone(&self) -> Self {
+        TreeHead {
+            count: self.count,
+            hash: self.hash.clone(),
+        }
+    }
 }
 
 impl<D: Digest> TreeHead<D> {

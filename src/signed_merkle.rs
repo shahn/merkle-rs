@@ -14,11 +14,19 @@ use std::error::Error;
 use untrusted;
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[derive(Clone)]
 pub struct SignedTreeHead<D: Digest> {
     #[cfg_attr(feature = "serde", serde(bound = ""))]
     th: TreeHead<D>,
     sig: Vec<u8>,
+}
+
+impl<D: Digest> Clone for SignedTreeHead<D> {
+    fn clone(&self) -> Self {
+        SignedTreeHead {
+            th: self.th.clone(),
+            sig: self.sig.clone(),
+        }
+    }
 }
 
 impl<D: Digest> SignedTreeHead<D> {
