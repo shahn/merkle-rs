@@ -14,7 +14,7 @@ pub trait Digestible: Eq + hash::Hash {
     fn hash_bytes(&self, digest: &mut extern_digest::Input);
 }
 
-pub trait Digest: extern_digest::Digest + Clone {
+pub trait Digest: extern_digest::Digest {
     fn hash_elem<T: Digestible>(elem: &T) -> Hash<Self>;
     fn hash_leaf(elem: &Hash<Self>) -> Hash<Self>;
     fn hash_inner(l: &Hash<Self>, r: &Hash<Self>) -> Hash<Self>;
@@ -22,7 +22,7 @@ pub trait Digest: extern_digest::Digest + Clone {
 
 impl<T> Digest for T
 where
-    T: extern_digest::Digest + Clone,
+    T: extern_digest::Digest,
 {
     fn hash_elem<R: Digestible>(elem: &R) -> Hash<Self> {
         let mut hasher = Self::default();
