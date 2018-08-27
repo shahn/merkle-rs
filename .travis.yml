@@ -25,4 +25,7 @@ script:
   - cargo doc --no-deps --features use_serde
   - cargo doc --no-deps --no-default-features
   - cargo doc --no-deps --no-default-features --features use_serde
+  - if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
+      cargo bench;
+    fi
 
